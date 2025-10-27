@@ -24,33 +24,29 @@ class AuthError {
         return '$message (Último intento)';
       }
     }
-    
+
     // Si llegamos aquí, es porque no hay información de intentos (status 423 o error sin headers)
-    // Mostrar mensaje de bloqueo con tiempo si está disponible
+    // Mostrar mensaje de bloqueo con tiempo fijo si está disponible
     if (resetTime != null) {
-      final now = DateTime.now();
-      final difference = resetTime!.difference(now);
-      
-      if (difference.inMinutes > 0) {
-        return 'Cuenta bloqueada por ${difference.inMinutes} min';
-      } else if (difference.inSeconds > 0) {
-        return 'Cuenta bloqueada por ${difference.inSeconds} seg';
-      }
+      return 'Cuenta bloqueada por 15 min';
     }
-    
+
     // Si es un mensaje de cuenta bloqueada, usar mensaje específico
     if (message.contains('bloqueada') || message.contains('locked')) {
       return 'Cuenta bloqueada temporalmente';
     }
-    
+
     // Para otros casos (sin headers), devolver el mensaje original
     return message;
   }
 
-  factory AuthError.fromResponse(Map<String, dynamic> responseData, Map<String, List<String>>? headers) {
+  factory AuthError.fromResponse(
+    Map<String, dynamic> responseData,
+    Map<String, List<String>>? headers,
+  ) {
     String message = responseData['message'] ?? 'Error de autenticación';
     String? errorCode = responseData['errorCode'];
-    
+
     // Convertir el mensaje del servidor a algo más amigable
     if (message == 'Invalid username or password') {
       message = 'Usuario o contraseña incorrectos';
@@ -61,14 +57,16 @@ class AuthError {
 
     // Extraer información de rate limiting de los headers
     if (headers != null) {
-      final remainingHeader = headers['x-ratelimit-username-remaining']?.first ?? 
-                             headers['X-RateLimit-Username-Remaining']?.first;
+      final remainingHeader =
+          headers['x-ratelimit-username-remaining']?.first ??
+          headers['X-RateLimit-Username-Remaining']?.first;
       if (remainingHeader != null) {
         attemptsRemaining = int.tryParse(remainingHeader);
       }
 
-      final resetHeader = headers['x-ratelimit-reset']?.first ?? 
-                         headers['X-RateLimit-Reset']?.first;
+      final resetHeader =
+          headers['x-ratelimit-reset']?.first ??
+          headers['X-RateLimit-Reset']?.first;
       if (resetHeader != null) {
         resetTime = DateTime.tryParse(resetHeader);
       }
@@ -82,12 +80,17 @@ class AuthError {
     );
   }
 
-  factory AuthError.fromBlockedAccount(Map<String, dynamic> responseData, Map<String, List<String>>? headers) {
+  factory AuthError.fromBlockedAccount(
+    Map<String, dynamic> responseData,
+    Map<String, List<String>>? headers,
+  ) {
     String message = responseData['message'] ?? 'Cuenta bloqueada';
     String? errorCode = responseData['errorCode'] ?? responseData['error'];
-    
+
     // Convertir el mensaje del servidor para cuenta bloqueada
-    if (message.contains('Account locked') || message.contains('Account temporarily locked') || message.contains('Too many attempts')) {
+    if (message.contains('Account locked') ||
+        message.contains('Account temporarily locked') ||
+        message.contains('Too many attempts')) {
       message = 'Cuenta bloqueada temporalmente';
     } else if (message == 'Invalid username or password') {
       message = 'Usuario o contraseña incorrectos';
@@ -98,8 +101,9 @@ class AuthError {
 
     // Primero intentar obtener el tiempo de reset de los headers
     if (headers != null) {
-      final resetHeader = headers['x-ratelimit-reset']?.first ?? 
-                         headers['X-RateLimit-Reset']?.first;
+      final resetHeader =
+          headers['x-ratelimit-reset']?.first ??
+          headers['X-RateLimit-Reset']?.first;
       if (resetHeader != null) {
         resetTime = DateTime.tryParse(resetHeader);
       }
@@ -108,8 +112,9 @@ class AuthError {
       // porque esto representa un estado de bloqueo, no un estado de "último intento"
       // Solo usar attemptsRemaining si el mensaje no indica bloqueo
       if (!message.contains('Cuenta bloqueada')) {
-        final remainingHeader = headers['x-ratelimit-username-remaining']?.first ?? 
-                               headers['X-RateLimit-Username-Remaining']?.first;
+        final remainingHeader =
+            headers['x-ratelimit-username-remaining']?.first ??
+            headers['X-RateLimit-Username-Remaining']?.first;
         if (remainingHeader != null) {
           attemptsRemaining = int.tryParse(remainingHeader);
         }
@@ -124,7 +129,8 @@ class AuthError {
     return AuthError(
       message: message,
       errorCode: errorCode,
-      attemptsRemaining: attemptsRemaining, // null indica cuenta bloqueada (status 423)
+      attemptsRemaining:
+          attemptsRemaining, // null indica cuenta bloqueada (status 423)
       resetTime: resetTime,
     );
   }

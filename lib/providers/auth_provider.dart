@@ -50,8 +50,6 @@ class AuthProvider with ChangeNotifier {
     _setLoading(true);
     _clearError();
 
-
-
     try {
       final authResponse = await _authService.login(username, password);
 

@@ -44,18 +44,14 @@ class AuthService {
         // Crear AuthError con información de rate limiting
         final responseData = e.response?.data as Map<String, dynamic>? ?? {};
         final headers = e.response?.headers.map;
-        
 
-        
         final authError = AuthError.fromResponse(responseData, headers);
         throw Exception(authError.userFriendlyMessage);
       } else if (e.response?.statusCode == 423) {
         // Cuenta bloqueada por demasiados intentos fallidos
         final responseData = e.response?.data as Map<String, dynamic>? ?? {};
         final headers = e.response?.headers.map;
-        
 
-        
         final authError = AuthError.fromBlockedAccount(responseData, headers);
         throw Exception(authError.userFriendlyMessage);
       } else if (e.response?.statusCode == 400) {
