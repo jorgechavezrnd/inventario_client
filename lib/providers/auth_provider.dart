@@ -50,6 +50,8 @@ class AuthProvider with ChangeNotifier {
     _setLoading(true);
     _clearError();
 
+
+
     try {
       final authResponse = await _authService.login(username, password);
 
@@ -59,7 +61,13 @@ class AuthProvider with ChangeNotifier {
       notifyListeners();
       return true;
     } catch (e) {
-      _setError(e.toString());
+      // Limpiar el mensaje removiendo "Exception: " al inicio
+      String cleanMessage = e.toString();
+      if (cleanMessage.startsWith('Exception: ')) {
+        cleanMessage = cleanMessage.substring('Exception: '.length);
+      }
+
+      _setError(cleanMessage);
       await _clearAuthState();
       return false;
     } finally {

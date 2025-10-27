@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:dio/dio.dart';
 import '../models/user.dart';
 import '../models/auth_response.dart';
+import '../models/auth_error.dart';
 import 'api_service.dart';
 
 class AuthService {
@@ -40,7 +41,23 @@ class AuthService {
       }
     } on DioException catch (e) {
       if (e.response?.statusCode == 401) {
-        throw Exception('Credenciales incorrectas');
+        // Crear AuthError con información de rate limiting
+        final responseData = e.response?.data as Map<String, dynamic>? ?? {};
+        final headers = e.response?.headers.map;
+        
+
+        
+        final authError = AuthError.fromResponse(responseData, headers);
+        throw Exception(authError.userFriendlyMessage);
+      } else if (e.response?.statusCode == 423) {
+        // Cuenta bloqueada por demasiados intentos fallidos
+        final responseData = e.response?.data as Map<String, dynamic>? ?? {};
+        final headers = e.response?.headers.map;
+        
+
+        
+        final authError = AuthError.fromBlockedAccount(responseData, headers);
+        throw Exception(authError.userFriendlyMessage);
       } else if (e.response?.statusCode == 400) {
         throw Exception('Datos de login inválidos');
       } else if (e.type == DioExceptionType.connectionTimeout ||

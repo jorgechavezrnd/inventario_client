@@ -230,7 +230,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                       authProvider.errorMessage!,
                                       style: TextStyle(
                                         color: Colors.red[700],
-                                        fontSize: 14,
+                                        fontSize: 13,
                                       ),
                                     ),
                                   ),
